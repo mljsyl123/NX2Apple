@@ -1,0 +1,20 @@
+{
+  "project": "y",
+  "platform": "ios",
+  "github": {
+    "owner": "LNPANDY",
+    "repo": "NX2Apple"
+  },
+  "provider": "github",
+  "codemagic": {},
+  "bitrise": {},
+  "ios": {
+    "path": "y"
+  },
+  "flutter": {
+    "watch": {}
+  },
+  "reactNative": {},
+  "kmp": {},
+  "mobai": {}
+}
