@@ -8,8 +8,8 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - name: Checkout full source
-        run: git clone --depth 1 https://github.com/LNPANDY/NX2Apple.git source
+      - name: Checkout NX2Apple
+        uses: actions/checkout@v4
 
       - name: Setup Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
@@ -19,16 +19,19 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install xcodegen
-        run: brew install xcodegen
+      - name: Install Homebrew deps
+        run: brew install xcodegen zstd spirv-cross glslang dotnet
 
       - name: Install Python deps
-        run: pip install fonttools
+        run: pip install lz4 capstone fonttools zbic nsz zstd
 
-      - name: Build shell
+      - name: Sync engine
+        run: python3 tools/engine.py sync 2>&1 | tail -20
+
+      - name: Build shell (dummy framework)
         run: |
           set -e
-          cd source/engine/dm/ios/tools
+          cd engine/dm/ios/tools
           
           # Create dummy framework directory for Mario Odyssey
           FW_DIR=$(mktemp -d)/DmGame0100000000010000.framework
@@ -49,7 +52,7 @@ jobs:
           bash build_shell.sh --build 2>&1 | tee build.log
 
       - name: List build output
-        run: ls -la shell-build/dd/Build/Products/Release-iphoneos/ || echo "no output dir"
+        run: ls -la shell-build/dd/Build/Products/Release-iphoneos/ 2>/dev/null || echo "no output dir"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
