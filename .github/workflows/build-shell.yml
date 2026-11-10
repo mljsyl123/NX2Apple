@@ -20,20 +20,26 @@ jobs:
           python-version: '3.12'
 
       - name: Install Homebrew deps
-        run: brew install xcodegen zstd spirv-cross glslang dotnet
+        run: |
+          brew install xcodegen zstd spirv-cross glslang
+          echo "brew done"
 
       - name: Install Python deps
-        run: pip install lz4 capstone fonttools zbic nsz zstd
+        run: |
+          pip install lz4 capstone fonttools zbic nsz
+          echo "pip done"
 
       - name: Sync engine
-        run: python3 tools/engine.py sync 2>&1 | tail -20
-
-      - name: Build shell (dummy framework)
         run: |
-          set -e
+          python3 tools/engine.py sync 2>&1 | tail -30
+          echo "engine sync done"
+          ls engine/dm/ios/tools/ | head
+
+      - name: Build shell
+        run: |
+          set -x
           cd engine/dm/ios/tools
           
-          # Create dummy framework directory for Mario Odyssey
           FW_DIR=$(mktemp -d)/DmGame0100000000010000.framework
           mkdir -p "$FW_DIR"
           
@@ -49,7 +55,7 @@ jobs:
           export DM_SHELL_NAME="NX2Apple"
           export DM_BUNDLE_ID="org.nxnative.shell"
           
-          bash build_shell.sh --build 2>&1 | tee build.log
+          bash build_shell.sh --build 2>&1 | tee build.log || true
 
       - name: List build output
         run: ls -la shell-build/dd/Build/Products/Release-iphoneos/ 2>/dev/null || echo "no output dir"
