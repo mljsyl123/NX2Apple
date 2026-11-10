@@ -1,0 +1,58 @@
+name: Build NX2Apple Shell
+run-name: Build Shell (CPU BC decode)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Install Python deps
+        run: pip install fonttools
+
+      - name: Build shell (dummy framework)
+        run: |
+          set -e
+          cd engine/dm/ios/tools
+          
+          # Create a dummy framework directory for Mario Odyssey profile
+          FW_DIR=$(mktemp -d)/DmGame0100000000010000.framework
+          mkdir -p "$FW_DIR"
+          
+          # Create dummy manifest (we'll build the real framework later)
+          cat > "$FW_DIR/game.manifest.json" << 'EOF'
+          {"framework": "DmGame0100000000010000", "framework_executable": "DmGame0100000000010000", "title_id": "0100000000010000", "name": "Super Mario Odyssey", "loader": "FH"}
+          EOF
+          
+          # Dummy executable (will be replaced by real build)
+          echo "dummy" > "$FW_DIR/DmGame0100000000010000"
+          chmod +x "$FW_DIR/DmGame0100000000010000"
+          
+          export SHELL_DIR="$GITHUB_WORKSPACE/shell-build"
+          export DM_SHELL_FRAMEWORKS="$FW_DIR"
+          export DM_SHELL_NAME="NX2Apple"
+          export DM_BUNDLE_ID="org.nxnative.shell"
+          
+          bash build_shell.sh --build 2>&1 | tee build.log
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NX2Apple-Shell
+          path: shell-build/dd/Build/Products/Release-iphoneos/
+          if-no-found: warn
